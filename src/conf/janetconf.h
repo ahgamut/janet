@@ -12,8 +12,8 @@
 /* #define JANET_BUILD "local" */
 
 /* These settings all affect linking, so use cautiously. */
-/* #define JANET_SINGLE_THREADED */
-/* #define JANET_NO_DYNAMIC_MODULES */
+#define JANET_SINGLE_THREADED
+#define JANET_NO_DYNAMIC_MODULES
 /* #define JANET_NO_NANBOX */
 /* #define JANET_API __attribute__((visibility ("default"))) */
 
@@ -23,13 +23,13 @@
 /* #define JANET_NO_DOCSTRINGS */
 /* #define JANET_NO_SOURCEMAPS */
 /* #define JANET_REDUCED_OS */
-/* #define JANET_NO_PROCESSES */
+#define JANET_NO_PROCESSES
 /* #define JANET_NO_ASSEMBLER */
 /* #define JANET_NO_PEG */
 /* #define JANET_NO_NET */
 /* #define JANET_NO_TYPED_ARRAY */
 /* #define JANET_NO_INT_TYPES */
-/* #define JANET_NO_EV */
+#define JANET_NO_EV
 /* #define JANET_NO_REALPATH */
 /* #define JANET_NO_SYMLINKS */
 /* #define JANET_NO_UMASK */
@@ -51,5 +51,13 @@
 
 /* Main client settings, does not affect library code */
 /* #define JANET_SIMPLE_GETLINE */
+
+/* Cosmopolitan-specific defines */
+#ifndef atof
+#define atof(s) strtod((s), NULL)
+#endif /* ifndef atof(s) */
+#ifndef FILENAME_MAX
+#define FILENAME_MAX BUFSIZ
+#endif /* ifndef FILENAME_MAX */    
 
 #endif /* end of include guard: JANETCONF_H */

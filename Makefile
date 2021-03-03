@@ -28,8 +28,8 @@ INCLUDEDIR?=$(PREFIX)/include
 BINDIR?=$(PREFIX)/bin
 LIBDIR?=$(PREFIX)/lib
 JANET_BUILD?="\"$(shell git log --pretty=format:'%h' -n 1 2> /dev/null || echo local)\""
-CLIBS=-lm -lpthread
 JANET_TARGET=build/janet
+JANET_EXE=build/janet.exe
 JANET_LIBRARY=build/libjanet.so
 JANET_STATIC_LIBRARY=build/libjanet.a
 JANET_PATH?=$(LIBDIR)/janet
@@ -38,14 +38,22 @@ JANET_PKG_CONFIG_PATH?=$(LIBDIR)/pkgconfig
 DEBUGGER=gdb
 SONAME_SETTER=-Wl,-soname,
 
+COSMO_LIBDIR= ./libcosmo
+COSMO_PREFLAGS= -static -nostdlib -nostdinc -fno-pie -no-pie -mno-red-zone
+COSMO_CFLAGS= -nostdlib -nostdinc -Iinclude/ -include $(COSMO_LIBDIR)/cosmopolitan.h
+COSMO_POSTFLAGS= -fuse-ld=bfd -Wl,-T,$(COSMO_LIBDIR)/ape.lds
+COSMO_FILES= $(COSMO_LIBDIR)/cosmopolitan.h $(COSMO_LIBDIR)/crt.o $(COSMO_LIBDIR)/ape.o $(COSMO_LIBDIR)/cosmopolitan.a
+CLIBS= $(COSMO_POSTFLAGS) -include $(COSMO_FILES)
+
+
 # For cross compilation
 HOSTCC?=$(CC)
 HOSTAR?=$(AR)
 CFLAGS?=-O2
-LDFLAGS?=-rdynamic
+LDFLAGS?=$(COSMO_PREFLAGS) 
 
-COMMON_CFLAGS:=-std=c99 -Wall -Wextra -Isrc/include -Isrc/conf -fvisibility=hidden -fPIC
-BOOT_CFLAGS:=-DJANET_BOOTSTRAP -DJANET_BUILD=$(JANET_BUILD) -O0 -g $(COMMON_CFLAGS)
+COMMON_CFLAGS:=-std=c99 -Wall -Wextra -fvisibility=hidden $(COSMO_CFLAGS) -Isrc/include -Isrc/conf 
+BOOT_CFLAGS:=-DJANET_BOOTSTRAP -DJANET_BUILD=$(JANET_BUILD) -O0 -g $(COMMON_CFLAGS) 
 BUILD_CFLAGS:=$(CFLAGS) $(COMMON_CFLAGS)
 
 # For installation
@@ -58,7 +66,7 @@ ifeq ($(UNAME), Darwin)
 	SONAME_SETTER:=-Wl,-install_name,
 	LDCONFIG:=true
 else ifeq ($(UNAME), Linux)
-	CLIBS:=$(CLIBS) -lrt -ldl
+	CLIBS:=$(CLIBS)
 endif
 # For other unix likes, add flags here!
 ifeq ($(UNAME), Haiku)
@@ -67,7 +75,8 @@ ifeq ($(UNAME), Haiku)
 endif
 
 $(shell mkdir -p build/core build/c build/boot)
-all: $(JANET_TARGET) $(JANET_LIBRARY) $(JANET_STATIC_LIBRARY) build/janet.h
+# all: $(JANET_TARGET) $(JANET_LIBRARY) $(JANET_STATIC_LIBRARY) build/janet.h
+all: $(JANET_EXE) $(JANET_TARGET) $(JANET_STATIC_LIBRARY) build/janet.h
 
 ######################
 ##### Name Files #####
@@ -146,7 +155,7 @@ build/%.boot.o: src/%.c $(JANET_HEADERS) $(JANET_LOCAL_HEADERS) Makefile
 	$(CC) $(BOOT_CFLAGS) -o $@ -c $<
 
 build/janet_boot: $(JANET_BOOT_OBJECTS)
-	$(CC) $(BOOT_CFLAGS) -o $@ $(JANET_BOOT_OBJECTS) $(CLIBS)
+	$(CC) $(BOOT_CFLAGS) -fno-pie -no-pie -mno-red-zone $(JANET_BOOT_OBJECTS) $(CLIBS) -o $@ 
 
 # Now the reason we bootstrap in the first place
 build/c/janet.c: build/janet_boot src/boot/boot.janet
@@ -173,6 +182,9 @@ build/janet.o: build/c/janet.c src/conf/janetconf.h src/include/janet.h
 
 build/shell.o: build/c/shell.c src/conf/janetconf.h src/include/janet.h
 	$(HOSTCC) $(BUILD_CFLAGS) -c $< -o $@
+
+$(JANET_EXE): $(JANET_TARGET)
+	objcopy -S -O binary $(JANET_TARGET) $(JANET_EXE)
 
 $(JANET_TARGET): build/janet.o build/shell.o
 	$(HOSTCC) $(LDFLAGS) $(BUILD_CFLAGS) -o $@ $^ $(CLIBS)

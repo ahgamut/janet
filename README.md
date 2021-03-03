@@ -1,3 +1,77 @@
+## Compiling Janet on Cosmopolitan
+
+This is a fork of the Github repo for [Janet][janet] customized to compile with
+[Cosmopolitan][cosmo] libc.  Meant for experimental purposes only. The `include`
+folder contains dummy headers corresponding to the [C stdlib][cstdlib]. The
+`libcosmo` folder should contain the required files for compiling an executable
+using Cosmopolitan on Linux.
+
+### Modifications
+
+Printing floats uses `%f` instead of `%g`.  
+Janet is compiled statically, so `libjanet.so` is not a target.  
+The following `#define`s were enabled for successful compilation.
+
+```c
+#define JANET_SINGLE_THREADED
+#define JANET_NO_DYNAMIC_MODULES
+#define JANET_NO_PROCESSES
+#define JANET_NO_EV
+
+/* Cosmopolitan-specific defines, can be removed soon*/
+#ifndef atof
+#define atof(s) strtod((s), NULL)
+#endif /* ifndef atof(s) */
+#ifndef FILENAME_MAX
+#define FILENAME_MAX BUFSIZ
+#endif /* ifndef FILENAME_MAX */    
+```
+
+`Makefile` runs without error (some warnings) to produce `janet.exe`.   
+`janet.exe` passes 6/10 test files of the suite in `test/`. 
+
+* suite0009 and suite0010 fail due to `os/spawn` and `os/execute`
+* suite0004 fails due to float printing
+* suite0007 segfaults (most likely related to syscalls).
+
+Compiled on:
+
+```bash
+# Debian Buster (Linux 4.19.0-12-amd64)
+$ gcc --version
+gcc (Debian 8.3.0-6) 8.3.0
+Copyright (C) 2018 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+$ clang --version
+Debian clang version 11.0.1-++20201103062553+ef4ffcafbb2-1~exp1~20201103053214.125
+Target: x86_64-pc-linux-gnu
+Thread model: posix
+```
+
+## Usage Instructions
+
+1. Compile the latest commit in the `master` branch of `Cosmopolitan`.
+2. Copy `cosmopolitan.h` (and `crt.o`, `ape.o`, `ape.lds`, `cosmopolitan.a`) to
+   the `libcosmo/` folder.
+3. Run `make`
+4. Run `janet.exe`
+
+```bash
+cd libcosmo/
+# use the latest version
+wget https://justine.lol/cosmopolitan/cosmopolitan-amalgamation-0.2.zip
+unzip cosmopolitan-amalgamation-0.2.zip
+# copy the compiled versions from the latest commit in master branch
+cd ../
+make -j4
+./build/janet.exe
+```
+
+[janet]: https://www.janet-lang.org
+[cosmo]: https://github.com/jart/cosmopolitan
+[cstdlib]: https://en.cppreference.com/w/c/header
+
 [![Join the chat](https://badges.gitter.im/janet-language/community.svg)](https://gitter.im/janet-language/community)
 &nbsp;
 [![Appveyor Status](https://ci.appveyor.com/api/projects/status/bjraxrxexmt3sxyv/branch/master?svg=true)](https://ci.appveyor.com/project/bakpakin/janet/branch/master)

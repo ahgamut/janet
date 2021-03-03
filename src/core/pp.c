@@ -41,7 +41,7 @@ static void number_to_string_b(JanetBuffer *buffer, double x) {
     janet_buffer_ensure(buffer, buffer->count + BUFSIZE, 2);
     const char *fmt = (x == floor(x) &&
                        x <= JANET_INTMAX_DOUBLE &&
-                       x >= JANET_INTMIN_DOUBLE) ? "%.0f" : "%g";
+                       x >= JANET_INTMIN_DOUBLE) ? "%.0f" : "%f";
     int count;
     if (x == 0.0) {
         /* Prevent printing of '-0' */
