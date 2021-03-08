@@ -52,12 +52,4 @@
 /* Main client settings, does not affect library code */
 /* #define JANET_SIMPLE_GETLINE */
 
-/* Cosmopolitan-specific defines */
-#ifndef atof
-#define atof(s) strtod((s), NULL)
-#endif /* ifndef atof(s) */
-#ifndef FILENAME_MAX
-#define FILENAME_MAX BUFSIZ
-#endif /* ifndef FILENAME_MAX */    
-
 #endif /* end of include guard: JANETCONF_H */
