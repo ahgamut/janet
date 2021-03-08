@@ -39,8 +39,8 @@ DEBUGGER=gdb
 SONAME_SETTER=-Wl,-soname,
 
 COSMO_LIBDIR= ./libcosmo
-COSMO_PREFLAGS= -static -nostdlib -nostdinc -fno-pie -no-pie -mno-red-zone
-COSMO_CFLAGS= -nostdlib -nostdinc -Iinclude/ -include $(COSMO_LIBDIR)/cosmopolitan.h
+COSMO_PREFLAGS= -static -nostdlib -nostdinc -fno-pie -no-pie -mno-red-zone -fno-omit-frame-pointer
+COSMO_CFLAGS= -nostdlib -nostdinc -fno-omit-frame-pointer -Iinclude/ -include $(COSMO_LIBDIR)/cosmopolitan.h
 COSMO_POSTFLAGS= -fuse-ld=bfd -Wl,-T,$(COSMO_LIBDIR)/ape.lds
 COSMO_FILES= $(COSMO_LIBDIR)/cosmopolitan.h $(COSMO_LIBDIR)/crt.o $(COSMO_LIBDIR)/ape.o $(COSMO_LIBDIR)/cosmopolitan.a
 CLIBS= $(COSMO_POSTFLAGS) -include $(COSMO_FILES)
