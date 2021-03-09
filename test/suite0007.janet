@@ -214,28 +214,28 @@
 
 # OS Date test
 
-assert (deep= {:year-day 0
-              :minutes 30
-              :month 0
-              :dst false
-              :seconds 0
-              :year 2014
-              :month-day 0
-              :hours 20 
-              :week-day 3}
-             (os/date 1388608200)) "os/date")
+(assert (deep= {:year-day 0
+                :minutes 30
+                :month 0
+                :dst false
+                :seconds 0
+                :year 2014
+                :month-day 0
+                :hours 20 
+                :week-day 3}
+               (os/date 1388608200)) "os/date")
 
 # OS mktime test
 
 (assert (= 1388608200 (os/mktime {:year-day 0
-                                :minutes 30
-                                :month 0
-                                :dst false
-                                :seconds 0
-                                :year 2014
-                                :month-day 0
-                                :hours 20
-                                :week-day 3})) "os/mktime")
+                                  :minutes 30
+                                  :month 0
+                                  :dst false
+                                  :seconds 0
+                                  :year 2014
+                                  :month-day 0
+                                  :hours 20
+                                  :week-day 3})) "os/mktime")
 
 (def now (os/time))
 (assert (= (os/mktime (os/date now)) now) "UTC os/mktime")
@@ -297,10 +297,10 @@ assert (deep= {:year-day 0
 (assert-error "comptime issue" (eval '(comptime (error "oops"))))
 
 (with [f (file/temp)]
-  (file/write f "foo\n")
-  (file/flush f)
-  (file/seek f :set 0)
-  (assert (= (string (file/read f :all)) "foo\n") "temp files work"))
+ (file/write f "foo\n")
+ (file/flush f)
+ (file/seek f :set 0)
+ (assert (= (string (file/read f :all)) "foo\n") "temp files work"))
 
 (var counter 0)
 (when-with [x nil |$]
