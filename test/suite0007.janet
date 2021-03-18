@@ -297,10 +297,10 @@
 (assert-error "comptime issue" (eval '(comptime (error "oops"))))
 
 (with [f (file/temp)]
- (file/write f "foo\n")
- (file/flush f)
- (file/seek f :set 0)
- (assert (= (string (file/read f :all)) "foo\n") "temp files work"))
+  (file/write f "foo\n")
+  (file/flush f)
+  (file/seek f :set 0)
+  (assert (= (string (file/read f :all)) "foo\n") "temp files work"))
 
 (var counter 0)
 (when-with [x nil |$]

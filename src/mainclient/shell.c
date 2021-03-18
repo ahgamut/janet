@@ -989,8 +989,7 @@ int main(int argc, char **argv) {
     int i, status;
     JanetArray *args;
     JanetTable *env;
-    
-    showcrashreports();
+
 #ifdef _WIN32
     /* Enable color console on windows 10 console and utf8 output. */
     HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
