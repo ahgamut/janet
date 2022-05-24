@@ -1,8 +1,58 @@
+## Compiling Janet on Cosmopolitan
+
+This is a fork of the Github repo for [Janet][janet] customized to compile with
+[Cosmopolitan][cosmo] libc.  Meant for experimental purposes only. The `include`
+folder contains dummy headers corresponding to the [C stdlib][cstdlib]. The
+`libcosmo` folder should contain the required files for compiling an executable
+using Cosmopolitan on Linux.
+
+### Modifications
+
+The following `#define`s were enabled for successful compilation.
+
+```c
+#define JANET_SINGLE_THREADED
+#define JANET_NO_DYNAMIC_MODULES
+#define JANET_NO_THREADS
+#define JANET_NO_UTC_MKTIME
+#define JANET_NO_EV
+```
+
+`Makefile` runs without error (some warnings) to produce `janet.com`.   
+`janet.com` passes almost 8/10 test files of the suite in `test/`. 
+
+* suite0009 and suite0010 fail due to `os/spawn` and `os/execute`
+* suite0007 fails only at `timegm`.
+
+## Usage Instructions
+
+1. Compile the latest commit in the `master` branch of `Cosmopolitan`.
+2. Copy `cosmopolitan.h` (and `crt.o`, `ape.o`, `ape.lds`, `cosmopolitan.a`) to
+   the `libcosmo/` folder.
+3. Run `make`
+4. Run `janet.com`
+
+```bash
+cd libcosmo/
+# use the latest version
+wget https://justine.lol/cosmopolitan/cosmopolitan.zip
+unzip cosmopolitan-amalgamation.zip
+# copy the compiled versions from the latest commit in master branch
+cd ../
+make -j4
+./build/janet.com
+```
+
+[janet]: https://www.janet-lang.org
+[cosmo]: https://github.com/jart/cosmopolitan
+[cstdlib]: https://en.cppreference.com/w/c/header
+
 [![Join the chat](https://badges.gitter.im/janet-language/community.svg)](https://gitter.im/janet-language/community)
 &nbsp;
+[![Appveyor Status](https://ci.appveyor.com/api/projects/status/bjraxrxexmt3sxyv/branch/master?svg=true)](https://ci.appveyor.com/project/bakpakin/janet/branch/master)
+[![Build Status](https://travis-ci.org/janet-lang/janet.svg?branch=master)](https://travis-ci.org/janet-lang/janet)
 [![builds.sr.ht status](https://builds.sr.ht/~bakpakin/janet/commits/freebsd.yml.svg)](https://builds.sr.ht/~bakpakin/janet/commits/freebsd.yml?)
 [![builds.sr.ht status](https://builds.sr.ht/~bakpakin/janet/commits/openbsd.yml.svg)](https://builds.sr.ht/~bakpakin/janet/commits/openbsd.yml?)
-[![Actions Status](https://github.com/janet-lang/janet/actions/workflows/test.yml/badge.svg)](https://github.com/janet-lang/janet/actions/workflows/test.yml)
 
 <img src="https://raw.githubusercontent.com/janet-lang/janet/master/assets/janet-w200.png" alt="Janet logo" width=200 align="left">
 
@@ -16,9 +66,6 @@ to run script files. This client program is separate from the core runtime, so
 Janet can be embedded in other programs. Try Janet in your browser at
 [https://janet-lang.org](https://janet-lang.org).
 
-If you'd like to financially support the ongoing development of Janet, consider
-[sponsoring its primary author](https://github.com/sponsors/bakpakin) through GitHub.
-
 <br>
 
 ## Use Cases
@@ -29,7 +76,6 @@ Lua, but smaller than GNU Guile or Python.
 
 ## Features
 
-* Configurable at build time - turn features on or off for a smaller or more featureful build
 * Minimal setup - one binary and you are good to go!
 * First-class closures
 * Garbage collection
@@ -39,8 +85,6 @@ Lua, but smaller than GNU Guile or Python.
 * Mutable and immutable hashtables (table/struct)
 * Mutable and immutable strings (buffer/string)
 * Macros
-* Multithreading
-* Per-thread event loop for efficient evented IO
 * Byte code interpreter with an assembly interface, as well as bytecode verification
 * Tail call Optimization
 * Direct interop with C via abstract types and C functions
@@ -175,7 +219,7 @@ Emacs, and Atom will have syntax packages for the Janet language, though.
 
 ## Installation
 
-See the [Introduction](https://janet-lang.org/docs/index.html) for more details. If you just want
+See [the Introduction](https://janet-lang.org/introduction.html) for more details. If you just want
 to try out the language, you don't need to install anything. You can also move the `janet` executable wherever you want on your system and run it.
 
 ## Usage
@@ -213,7 +257,7 @@ Options are:
   -- : Stop handling options
 ```
 
-If installed, you can also run `man janet` to get usage information.
+If installed, you can also run `man janet` and `man jpm` to get usage information.
 
 ## Embedding
 
@@ -236,55 +280,9 @@ See the examples directory for some example janet code.
 ## Discussion
 
 Feel free to ask questions and join the discussion on the [Janet Gitter Channel](https://gitter.im/janet-language/community).
-Gitter provides Matrix and irc bridges as well.
+Alternatively, check out [the #janet channel on Freenode](https://webchat.freenode.net/)
 
 ## FAQ
-
-### Where is (favorite feature from other language)?
-
-It may exist, it may not. If you want to propose major language features, go ahead and open an issue, but
-they will likely by closed as "will not implement". Often, such features make one usecase simpler at the expense
-of 5 others by making the language more complicated.
-
-### Is there a language spec?
-
-There is not currently a spec besides the documentation at https://janet-lang.org.
-
-### Is this Scheme/Common Lisp? Where are the cons cells?
-
-Nope. There are no cons cells here.
-
-### Is this a Clojure port?
-
-No. It's similar to Clojure superficially because I like Lisps and I like the aesthetics.
-Internally, Janet is not at all like Clojure.
-
-### Are the immutable data structures (tuples and structs) implemented as hash tries?
-
-No. They are immutable arrays and hash tables. Don't try and use them like Clojure's vectors
-and maps, instead they work well as table keys or other identifiers.
-
-### Can I do Object Oriented programming with Janet?
-
-To some extent, yes. However, it is not the recommended method of abstraction, and performance may suffer.
-That said, tables can be used to make mutable objects with inheritance and polymorphism, where object
-methods are implemeted with keywords.
-
-```
-(def Car @{:honk (fn [self msg] (print "car " self " goes " msg)) })
-(def my-car (table/setproto @{} Car))
-(:honk my-car "Beep!")
-```
-
-### Why can't we add (feature from Clojure) into the core?
-
-Usually, one of a few reasons:
-- Often, it already exists in a different form and the Clojure port would be redundant.
-- Clojure programs often generate a lot of garbage and rely on the JVM to clean it up.
-  Janet does not run on the JVM, and has a more primitive garbage collector.
-- We want to keep the Janet core small. With Lisps, usually a feature can be added as a library
-  without feeling "bolted on", especially when compared to ALGOL like languages. Adding features
-  to the core also makes it a bit more difficult to keep Janet maximally portable.
 
 ### Why is my terminal spitting out junk when I run the REPL?
 
@@ -294,6 +292,8 @@ will not. If your terminal does not support ANSI escape codes, run the REPL with
 the `-n` flag, which disables color output. You can also try the `-s` if further issues
 ensue.
 
-## Why is it called "Janet"?
+## Why Janet
 
 Janet is named after the almost omniscient and friendly artificial being in [The Good Place](https://en.wikipedia.org/wiki/The_Good_Place).
+
+<img src="https://raw.githubusercontent.com/janet-lang/janet/master/assets/janet-the-good-place.gif" alt="Janet logo" width="115px" align="left">

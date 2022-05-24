@@ -12,8 +12,8 @@
 /* #define JANET_BUILD "local" */
 
 /* These settings all affect linking, so use cautiously. */
-/* #define JANET_SINGLE_THREADED */
-/* #define JANET_NO_DYNAMIC_MODULES */
+#define JANET_SINGLE_THREADED
+#define JANET_NO_DYNAMIC_MODULES
 /* #define JANET_NO_NANBOX */
 /* #define JANET_API __attribute__((visibility ("default"))) */
 
@@ -28,16 +28,16 @@
 /* #define JANET_NO_PEG */
 /* #define JANET_NO_NET */
 /* #define JANET_NO_INT_TYPES */
-/* #define JANET_NO_EV */
+#define JANET_NO_EV
 /* #define JANET_NO_REALPATH */
 /* #define JANET_NO_SYMLINKS */
 /* #define JANET_NO_UMASK */
-/* #define JANET_NO_THREADS */
+#define JANET_NO_THREADS
 
 /* Other settings */
 /* #define JANET_DEBUG */
 /* #define JANET_PRF */
-/* #define JANET_NO_UTC_MKTIME */
+#define JANET_NO_UTC_MKTIME
 /* #define JANET_OUT_OF_MEMORY do { printf("janet out of memory\n"); exit(1); } while (0) */
 /* #define JANET_EXIT(msg) do { printf("C assert failed executing janet: %s\n", msg); exit(1); } while (0) */
 /* #define JANET_TOP_LEVEL_SIGNAL(msg) call_my_function((msg), stderr) */

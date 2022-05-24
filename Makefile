@@ -28,8 +28,9 @@ INCLUDEDIR?=$(PREFIX)/include
 BINDIR?=$(PREFIX)/bin
 LIBDIR?=$(PREFIX)/lib
 JANET_BUILD?="\"$(shell git log --pretty=format:'%h' -n 1 2> /dev/null || echo local)\""
-CLIBS=-lm -lpthread
+# CLIBS=-lm -lpthread
 JANET_TARGET=build/janet
+JANET_APE=build/janet.com
 JANET_LIBRARY=build/libjanet.so
 JANET_STATIC_LIBRARY=build/libjanet.a
 JANET_PATH?=$(LIBDIR)/janet
@@ -40,13 +41,22 @@ JPM_TAG?=master
 DEBUGGER=gdb
 SONAME_SETTER=-Wl,-soname,
 
+
+COSMO_LIBDIR= ./libcosmo
+COSMO_PREFLAGS= -static -nostdlib -nostdinc -fno-pie -no-pie -mno-red-zone -fno-omit-frame-pointer
+COSMO_CFLAGS= $(COSMO_PREFLAGS) -Iinclude/ -include $(COSMO_LIBDIR)/cosmopolitan.h
+COSMO_POSTFLAGS= -fuse-ld=bfd -Wl,-T,$(COSMO_LIBDIR)/ape.lds
+COSMO_FILES= $(COSMO_LIBDIR)/cosmopolitan.h $(COSMO_LIBDIR)/crt.o $(COSMO_LIBDIR)/ape.o $(COSMO_LIBDIR)/cosmopolitan.a
+CLIBS= $(COSMO_POSTFLAGS) -include $(COSMO_FILES)
+
+
 # For cross compilation
 HOSTCC?=$(CC)
 HOSTAR?=$(AR)
 CFLAGS?=-O2
-LDFLAGS?=-rdynamic
+LDFLAGS?=$(COSMO_PREFLAGS)
 
-COMMON_CFLAGS:=-std=c99 -Wall -Wextra -Isrc/include -Isrc/conf -fvisibility=hidden -fPIC
+COMMON_CFLAGS:=-std=c99 -Wall -Wextra -Isrc/include -Isrc/conf -fvisibility=hidden $(COSMO_CFLAGS)
 BOOT_CFLAGS:=-DJANET_BOOTSTRAP -DJANET_BUILD=$(JANET_BUILD) -O0 -g $(COMMON_CFLAGS)
 BUILD_CFLAGS:=$(CFLAGS) $(COMMON_CFLAGS)
 
@@ -61,7 +71,7 @@ ifeq ($(UNAME), Darwin)
 	JANET_LIBRARY=build/libjanet.dylib
 	LDCONFIG:=true
 else ifeq ($(UNAME), Linux)
-	CLIBS:=$(CLIBS) -lrt -ldl
+	CLIBS:=$(CLIBS)
 endif
 
 # For other unix likes, add flags here!
@@ -77,7 +87,7 @@ endif
 endif
 
 $(shell mkdir -p build/core build/c build/boot)
-all: $(JANET_TARGET) $(JANET_LIBRARY) $(JANET_STATIC_LIBRARY) build/janet.h
+all: $(JANET_APE) $(JANET_TARGET) $(JANET_STATIC_LIBRARY) build/janet.h
 
 ######################
 ##### Name Files #####
@@ -187,6 +197,9 @@ build/janet.o: build/c/janet.c src/conf/janetconf.h src/include/janet.h
 build/shell.o: build/c/shell.c src/conf/janetconf.h src/include/janet.h
 	$(HOSTCC) $(BUILD_CFLAGS) -c $< -o $@
 
+$(JANET_APE): $(JANET_TARGET)
+	objcopy -S -O binary $(JANET_TARGET) $(JANET_APE)
+
 $(JANET_TARGET): build/janet.o build/shell.o
 	$(HOSTCC) $(LDFLAGS) $(BUILD_CFLAGS) -o $@ $^ $(CLIBS)
 
@@ -234,14 +247,14 @@ dist: build/janet-dist.tar.gz
 
 build/janet-%.tar.gz: $(JANET_TARGET) \
 	build/janet.h \
-	janet.1 LICENSE CONTRIBUTING.md $(JANET_LIBRARY) $(JANET_STATIC_LIBRARY) \
+	janet.1 LICENSE CONTRIBUTING.md $(JANET_STATIC_LIBRARY) \
 	README.md build/c/janet.c build/c/shell.c
 	mkdir -p build/$(JANET_DIST_DIR)/bin
 	cp $(JANET_TARGET) build/$(JANET_DIST_DIR)/bin/
 	mkdir -p build/$(JANET_DIST_DIR)/include
 	cp build/janet.h build/$(JANET_DIST_DIR)/include/
 	mkdir -p build/$(JANET_DIST_DIR)/lib/
-	cp $(JANET_LIBRARY) $(JANET_STATIC_LIBRARY) build/$(JANET_DIST_DIR)/lib/
+	cp $(JANET_STATIC_LIBRARY) build/$(JANET_DIST_DIR)/lib/
 	mkdir -p build/$(JANET_DIST_DIR)/man/man1/
 	cp janet.1 build/$(JANET_DIST_DIR)/man/man1/janet.1
 	mkdir -p build/$(JANET_DIST_DIR)/src/
