@@ -11,15 +11,14 @@ using Cosmopolitan on Linux.
 The following `#define`s were enabled for successful compilation.
 
 ```c
-#define JANET_SINGLE_THREADED
 #define JANET_NO_DYNAMIC_MODULES
-#define JANET_NO_THREADS
 #define JANET_NO_UTC_MKTIME
 #define JANET_NO_EV
+// also FFI was disabled.
 ```
 
 `Makefile` runs without error (some warnings) to produce `janet.com`.   
-`janet.com` passes almost 8/10 test files of the suite in `test/`. 
+`janet.com` passes almost 11/13 test files of the suite in `test/`. 
 
 * suite0009 and suite0010 fail due to `os/spawn` and `os/execute`
 * suite0007 fails only at `timegm`.
