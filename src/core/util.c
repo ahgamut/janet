@@ -36,6 +36,13 @@
 #endif
 #endif
 
+#ifdef JANET_WINDOWS
+#ifdef JANET_DYNAMIC_MODULES
+#include <psapi.h>
+#pragma comment (lib, "Psapi.lib")
+#endif
+#endif
+
 #ifdef JANET_APPLE
 #include <AvailabilityMacros.h>
 #endif
@@ -739,6 +746,13 @@ int janet_checkint64(Janet x) {
     return janet_checkint64range(dval);
 }
 
+int janet_checkuint64(Janet x) {
+    if (!janet_checktype(x, JANET_NUMBER))
+        return 0;
+    double dval = janet_unwrap_number(x);
+    return dval >= 0 && dval <= JANET_INTMAX_DOUBLE && dval == (uint64_t) dval;
+}
+
 int janet_checksize(Janet x) {
     if (!janet_checktype(x, JANET_NUMBER))
         return 0;
@@ -877,6 +891,73 @@ int janet_cryptorand(uint8_t *out, size_t n) {
 #endif
 }
 
+/* Dynamic library loading */
+
+char *get_processed_name(const char *name) {
+    if (name[0] == '.') return (char *) name;
+    const char *c;
+    for (c = name; *c; c++) {
+        if (*c == '/') return (char *) name;
+    }
+    size_t l = (size_t)(c - name);
+    char *ret = janet_malloc(l + 3);
+    if (NULL == ret) {
+        JANET_OUT_OF_MEMORY;
+    }
+    ret[0] = '.';
+    ret[1] = '/';
+    memcpy(ret + 2, name, l + 1);
+    return ret;
+}
+
+#if defined(JANET_WINDOWS)
+
+static char error_clib_buf[256];
+char *error_clib(void) {
+    FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                   NULL, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                   error_clib_buf, sizeof(error_clib_buf), NULL);
+    error_clib_buf[strlen(error_clib_buf) - 1] = '\0';
+    return error_clib_buf;
+}
+
+Clib load_clib(const char *name) {
+    if (name == NULL) {
+        return GetModuleHandle(NULL);
+    } else {
+        return LoadLibrary(name);
+    }
+}
+
+void free_clib(HINSTANCE clib) {
+    if (clib != GetModuleHandle(NULL)) {
+        FreeLibrary(clib);
+    }
+}
+
+void *symbol_clib(HINSTANCE clib, const char *sym) {
+    if (clib != GetModuleHandle(NULL)) {
+        return GetProcAddress(clib, sym);
+    } else {
+        /* Look up symbols from all loaded modules */
+        HMODULE hMods[1024];
+        DWORD needed = 0;
+        if (EnumProcessModules(GetCurrentProcess(), hMods, sizeof(hMods), &needed)) {
+            needed /= sizeof(HMODULE);
+            for (DWORD i = 0; i < needed; i++) {
+                void *address = GetProcAddress(hMods[i], sym);
+                if (NULL != address) {
+                    return address;
+                }
+            }
+        } else {
+            janet_panicf("ffi: %s", error_clib());
+        }
+        return NULL;
+    }
+}
+
+#endif
 
 /* Alloc function macro fills */
 void *(janet_malloc)(size_t size) {

@@ -220,14 +220,14 @@
 /* Trace a function call */
 static void vm_do_trace(JanetFunction *func, int32_t argc, const Janet *argv) {
     if (func->def->name) {
-        janet_printf("trace (%S", func->def->name);
+        janet_eprintf("trace (%S", func->def->name);
     } else {
-        janet_printf("trace (%p", janet_wrap_function(func));
+        janet_eprintf("trace (%p", janet_wrap_function(func));
     }
     for (int32_t i = 0; i < argc; i++) {
-        janet_printf(" %p", argv[i]);
+        janet_eprintf(" %p", argv[i]);
     }
-    janet_printf(")\n");
+    janet_eprintf(")\n");
 }
 
 /* Invoke a method once we have looked it up */
@@ -1285,6 +1285,12 @@ JanetSignal janet_step(JanetFiber *fiber, Janet in, Janet *out) {
     return signal;
 }
 
+static Janet void_cfunction(int32_t argc, Janet *argv) {
+    (void) argc;
+    (void) argv;
+    janet_panic("placeholder");
+}
+
 Janet janet_call(JanetFunction *fun, int32_t argc, const Janet *argv) {
     /* Check entry conditions */
     if (!janet_vm.fiber)
@@ -1292,9 +1298,17 @@ Janet janet_call(JanetFunction *fun, int32_t argc, const Janet *argv) {
     if (janet_vm.stackn >= JANET_RECURSION_GUARD)
         janet_panic("C stack recursed too deeply");
 
+    /* Dirty stack */
+    int32_t dirty_stack = janet_vm.fiber->stacktop - janet_vm.fiber->stackstart;
+    if (dirty_stack) {
+        janet_fiber_cframe(janet_vm.fiber, void_cfunction);
+    }
+
     /* Tracing */
     if (fun->gc.flags & JANET_FUNCFLAG_TRACE) {
+        janet_vm.stackn++;
         vm_do_trace(fun, argc, argv);
+        janet_vm.stackn--;
     }
 
     /* Push frame */
@@ -1322,6 +1336,10 @@ Janet janet_call(JanetFunction *fun, int32_t argc, const Janet *argv) {
     /* Teardown */
     janet_vm.stackn = oldn;
     janet_gcunlock(handle);
+    if (dirty_stack) {
+        janet_fiber_popframe(janet_vm.fiber);
+        janet_vm.fiber->stacktop += dirty_stack;
+    }
 
     if (signal != JANET_SIGNAL_OK) {
         janet_panicv(*janet_vm.return_reg);

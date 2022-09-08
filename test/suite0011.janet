@@ -1,4 +1,4 @@
-# Copyright (c) 2021 Calvin Rose & contributors
+# Copyright (c) 2022 Calvin Rose & contributors
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -79,6 +79,28 @@
 (assert-error
   "table rawget regression"
   (table/new -1))
+
+# Named arguments
+(defn named-arguments
+  [&named bob sally joe]
+  (+ bob sally joe))
+
+(assert (= 15 (named-arguments :bob 3 :sally 5 :joe 7)) "named arguments 1")
+
+(defn named-opt-arguments
+  [&opt x &named a b c]
+  (+ x a b c))
+
+(assert (= 10 (named-opt-arguments 1 :a 2 :b 3 :c 4)) "named arguments 2")
+
+(let [b @""]
+  (defn dummy [a b c]
+    (+ a b c))
+  (trace dummy)
+  (defn errout [arg]
+    (buffer/push b arg))
+  (assert (= 6 (with-dyns [*err* errout] (dummy 1 2 3))) "trace to custom err function")
+  (assert (deep= @"trace (dummy 1 2 3)\n" b) "trace buffer correct"))
 
 (end-suite)
 
