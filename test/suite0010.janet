@@ -193,11 +193,11 @@
 (assert (= (math/lcm 462 1071) 23562) "math/lcm 1")
 
 # Evaluate stream with `dofile`
-(def [r w] (os/pipe))
-(:write w "(setdyn :x 10)")
-(:close w)
-(def stream-env (dofile r))
-(assert (= (stream-env :x) 10) "dofile stream 1")
+# (def [r w] (os/pipe))
+# (:write w "(setdyn :x 10)")
+# (:close w)
+# (def stream-env (dofile r))
+# (assert (= (stream-env :x) 10) "dofile stream 1")
 
 # Issue #861 - should be valgrind clean
 (def step1 "(a b c d)\n")

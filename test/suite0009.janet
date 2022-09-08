@@ -18,9 +18,9 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
+(quit)
 (import ./helper :prefix "" :exit true)
 (start-suite 9)
-
 # Subprocess
 
 (def janet (dyn :executable))

@@ -46,8 +46,8 @@ COSMO_LIBDIR= ./libcosmo
 COSMO_PREFLAGS= -static -nostdlib -nostdinc -fno-pie -no-pie -mno-red-zone -fno-omit-frame-pointer
 COSMO_CFLAGS= $(COSMO_PREFLAGS) -Iinclude/ -include $(COSMO_LIBDIR)/cosmopolitan.h
 COSMO_POSTFLAGS= -fuse-ld=bfd -Wl,-T,$(COSMO_LIBDIR)/ape.lds
-COSMO_FILES= $(COSMO_LIBDIR)/cosmopolitan.h $(COSMO_LIBDIR)/crt.o $(COSMO_LIBDIR)/ape.o $(COSMO_LIBDIR)/cosmopolitan.a
-CLIBS= $(COSMO_POSTFLAGS) -include $(COSMO_FILES)
+COSMO_FILES= $(COSMO_LIBDIR)/crt.o $(COSMO_LIBDIR)/ape-no-modify-self.o $(COSMO_LIBDIR)/cosmopolitan.a
+CLIBS= $(COSMO_POSTFLAGS) $(COSMO_FILES)
 
 
 # For cross compilation
@@ -56,7 +56,7 @@ HOSTAR?=$(AR)
 CFLAGS?=-O2
 LDFLAGS?=$(COSMO_PREFLAGS)
 
-COMMON_CFLAGS:=-std=c99 -Wall -Wextra -Isrc/include -Isrc/conf -fvisibility=hidden $(COSMO_CFLAGS)
+COMMON_CFLAGS:=-Wall -Wextra -Isrc/include -Isrc/conf -fvisibility=hidden $(COSMO_CFLAGS)
 BOOT_CFLAGS:=-DJANET_BOOTSTRAP -DJANET_BUILD=$(JANET_BUILD) -O0 -g $(COMMON_CFLAGS)
 BUILD_CFLAGS:=$(CFLAGS) $(COMMON_CFLAGS)
 
